@@ -26,7 +26,186 @@ class _PHFHomeState extends State<PHFHome>{int tab=0;DateTime month=DateTime(Dat
 @override void initState(){super.initState();load();}Future<void> load()async{final p=await SharedPreferences.getInstance();final es=(p.getStringList('events')??[]).map((x){try{return EventData.fromJson(jsonDecode(x));}catch(_){return null;}}).whereType<EventData>().toList();final ts=(p.getStringList('team')??[]).map((x){try{return TeamMember.fromJson(jsonDecode(x));}catch(_){return null;}}).whereType<TeamMember>().toList();setState((){events=es;team=ts;});}Future<void> save()async{final p=await SharedPreferences.getInstance();await p.setStringList('events',events.map((e)=>jsonEncode(e.toJson())).toList());await p.setStringList('team',team.map((e)=>jsonEncode(e.toJson())).toList());}bool same(DateTime a,DateTime b)=>a.year==b.year&&a.month==b.month&&a.day==b.day;List<EventData> dayEvents(DateTime d)=>events.where((e)=>same(e.date,d)).toList();String mon(int m)=>const ['','January','February','March','April','May','June','July','August','September','October','November','December'][m];
 @override Widget build(BuildContext c){final pages=[calendarPage(),eventsPage(),teamPage(),contactsPage(),morePage()];return Scaffold(body:SafeArea(child:pages[tab]),bottomNavigationBar:NavigationBar(selectedIndex:tab,onDestinationSelected:(i)=>setState(()=>tab=i),destinations:const[NavigationDestination(icon:Icon(Icons.calendar_month_outlined),selectedIcon:Icon(Icons.calendar_month),label:'Calendar'),NavigationDestination(icon:Icon(Icons.event_outlined),selectedIcon:Icon(Icons.event),label:'Events'),NavigationDestination(icon:Icon(Icons.groups_outlined),selectedIcon:Icon(Icons.groups),label:'Team'),NavigationDestination(icon:Icon(Icons.contacts_outlined),selectedIcon:Icon(Icons.contacts),label:'Contacts'),NavigationDestination(icon:Icon(Icons.more_horiz),label:'More')]));}
 Widget top(String title,{List<Widget> actions=const[]})=>Padding(padding:const EdgeInsets.fromLTRB(10,8,8,4),child:Row(children:[IconButton(onPressed:(){},icon:const Icon(Icons.menu)),Expanded(child:Center(child:Text(title,style:const TextStyle(fontSize:20,fontWeight:FontWeight.w700)))),...actions]));
-Widget calendarPage(){final first=DateTime(month.year,month.month,1),count=DateTime(month.year,month.month+1,0).day,offset=first.weekday%7,cells=((offset+count+6)~/7)*7;return Column(children:[top('Dashboard',actions:[IconButton(onPressed:()=>openEvent(),icon:const CircleAvatar(child:Icon(Icons.add)))]),Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>month=DateTime(month.year,month.month-1)),icon:const Icon(Icons.chevron_left)),Text('${mon(month.month)} ${month.year}',style:const TextStyle(fontWeight:FontWeight.w700,fontSize:17)),IconButton(onPressed:()=>setState(()=>month=DateTime(month.year,month.month+1)),icon:const Icon(Icons.chevron_right))]),Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Row(children:['SUN','MON','TUE','WED','THU','FRI','SAT'].map((x)=>Expanded(child:Center(child:Text(x,style:const TextStyle(fontSize:11,fontWeight:FontWeight.bold)))).toList())),const SizedBox(height:4),SizedBox(height:300,child:GridView.builder(physics:const NeverScrollableScrollPhysics(),padding:const EdgeInsets.symmetric(horizontal:10),itemCount:cells,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:7),itemBuilder:(_,i){if(i<offset||i>=offset+count)return const SizedBox();final d=DateTime(month.year,month.month,i-offset+1),ev=dayEvents(d),sel=same(d,selected);return GestureDetector(onTap:()=>setState(()=>selected=d),child:Container(margin:const EdgeInsets.all(3),decoration:BoxDecoration(color:sel?const Color(0xFF6C3FF5):Colors.transparent,shape:BoxShape.circle),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text('${d.day}',style:TextStyle(color:sel?Colors.white:null,fontWeight:FontWeight.w600)),if(ev.isNotEmpty)Container(width:5,height:5,margin:const EdgeInsets.only(top:3),decoration:BoxDecoration(color:sel?Colors.white:const Color(0xFF6C3FF5),shape:BoxShape.circle))])));}),Expanded(child:ListView(padding:const EdgeInsets.fromLTRB(16,0,16,12),children:[Text('Events on ${selected.day} ${mon(selected.month)} ${selected.year}',style:const TextStyle(fontSize:17,fontWeight:FontWeight.bold)),const SizedBox(height:8),...dayEvents(selected).map(eventCard),if(dayEvents(selected).isEmpty)const Padding(padding:EdgeInsets.all(24),child:Center(child:Text('No events booked on this date')))]))]);}
+Widget calendarPage() {
+  final first = DateTime(month.year, month.month, 1);
+  final count = DateTime(month.year, month.month + 1, 0).day;
+  final offset = first.weekday % 7;
+  final cells = ((offset + count + 6) ~/ 7) * 7;
+
+  return Column(
+    children: [
+      top(
+        'Dashboard',
+        actions: [
+          IconButton(
+            onPressed: () => openEvent(),
+            icon: const CircleAvatar(
+              child: Icon(Icons.add),
+            ),
+          ),
+        ],
+      ),
+
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                month = DateTime(month.year, month.month - 1);
+              });
+            },
+            icon: const Icon(Icons.chevron_left),
+          ),
+
+          Text(
+            '${mon(month.month)} ${month.year}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
+            ),
+          ),
+
+          IconButton(
+            onPressed: () {
+              setState(() {
+                month = DateTime(month.year, month.month + 1);
+              });
+            },
+            icon: const Icon(Icons.chevron_right),
+          ),
+        ],
+      ),
+
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            'SUN',
+            'MON',
+            'TUE',
+            'WED',
+            'THU',
+            'FRI',
+            'SAT',
+          ].map(
+            (x) => Expanded(
+              child: Center(
+                child: Text(
+                  x,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ).toList(),
+        ),
+      ),
+
+      const SizedBox(height: 4),
+
+      SizedBox(
+        height: 300,
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          itemCount: cells,
+          gridDelegate:
+              const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+          ),
+          itemBuilder: (_, i) {
+            if (i < offset || i >= offset + count) {
+              return const SizedBox();
+            }
+
+            final d = DateTime(
+              month.year,
+              month.month,
+              i - offset + 1,
+            );
+
+            final ev = dayEvents(d);
+            final sel = same(d, selected);
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  selected = d;
+                });
+              },
+              child: Container(
+                margin: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: sel
+                      ? const Color(0xFF6C3FF5)
+                      : Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${d.day}',
+                      style: TextStyle(
+                        color: sel ? Colors.white : null,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    if (ev.isNotEmpty)
+                      Container(
+                        width: 5,
+                        height: 5,
+                        margin: const EdgeInsets.only(top: 3),
+                        decoration: BoxDecoration(
+                          color: sel
+                              ? Colors.white
+                              : const Color(0xFF6C3FF5),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+
+      Expanded(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          children: [
+            Text(
+              'Events on ${selected.day} ${mon(selected.month)} ${selected.year}',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            ...dayEvents(selected).map(eventCard),
+
+            if (dayEvents(selected).isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(
+                  child: Text(
+                    'No events booked on this date',
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 Widget eventCard(EventData e)=>Card(clipBehavior:Clip.antiAlias,child:InkWell(onTap:()=>openEvent(existing:e),child:Padding(padding:const EdgeInsets.all(14),child:Row(children:[Container(width:5,height:72,decoration:BoxDecoration(color:const Color(0xFF6C3FF5),borderRadius:BorderRadius.circular(10))),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(children:[Expanded(child:Text(e.name.isEmpty?e.client:e.name,style:const TextStyle(fontWeight:FontWeight.bold,fontSize:15))),Text(e.time)]),const SizedBox(height:5),Text('📍 ${e.venue}'),Text('◉ ${e.type}')])),Text('${e.assignments.values.fold<int>(0,(s,x)=>s+x.length)} crew',style:const TextStyle(fontSize:11))]))));
 Widget eventsPage(){final f=events.where((e)=>'${e.name} ${e.client} ${e.venue}'.toLowerCase().contains(search.toLowerCase())).toList()..sort((a,b)=>a.date.compareTo(b.date));return Column(children:[top('Events'),Padding(padding:const EdgeInsets.all(12),child:TextField(onChanged:(v)=>setState(()=>search=v),decoration:const InputDecoration(prefixIcon:Icon(Icons.search),hintText:'Search client or event',border:OutlineInputBorder()))),Expanded(child:ListView(padding:const EdgeInsets.symmetric(horizontal:12),children:f.map((e)=>Padding(padding:const EdgeInsets.only(bottom:8),child:eventCard(e))).toList()))]);}
 Widget teamPage()=>Column(children:[top('Team Members',actions:[IconButton(onPressed:addTeamManually,icon:const Icon(Icons.add))]),Expanded(child:ListView.builder(padding:const EdgeInsets.symmetric(horizontal:12),itemCount:team.length,itemBuilder:(_,i)=>teamTile(team[i]))) ]);
