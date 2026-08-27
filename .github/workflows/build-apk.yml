@@ -24,7 +24,7 @@ jobs:
           cache: true
 
       - name: Create Android platform
-        run: flutter create --platforms=android --org com.paraghariyani .
+  run: flutter create --project-name phf --platforms=android --org com.paraghariyani .
 
       - name: Add contacts permissions
         run: |
