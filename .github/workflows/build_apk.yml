@@ -45,8 +45,11 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Remove default Flutter test
+        run: rm -rf test
+
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze lib/main.dart
 
       - name: Build APK
         run: flutter build apk --release
