@@ -324,7 +324,25 @@ class _PHFHomeState extends State<PHFHome> {
     return Column(children: [
       top('Team Members', actions: [IconButton(onPressed: importContact, tooltip: 'Import contact', icon: const Icon(Icons.person_add_alt_1))]),
       Padding(padding: const EdgeInsets.fromLTRB(12, 4, 12, 8), child: TextField(onChanged: (v) => setState(() => teamSearch = v), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by name, phone or role', border: OutlineInputBorder()))),
-      SizedBox(height: 46, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12), children: ['All', ...roles].map((r) => Padding(padding: const EdgeInsets.only(right: 8), child: ChoiceChip(label: Text(r), selected: teamRole == r, onSelected: (_) => setState(() => teamRole = r))).toList())),
+SizedBox(
+  height: 46,
+  child: ListView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    children: ['All', ...roles]
+        .map(
+          (r) => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(r),
+              selected: teamRole == r,
+              onSelected: (_) => setState(() => teamRole = r),
+            ),
+          ),
+        )
+        .toList(),
+  ),
+),
       Expanded(child: filtered.isEmpty ? const Center(child: Text('No team members')) : ListView.builder(padding: const EdgeInsets.symmetric(horizontal: 12), itemCount: filtered.length, itemBuilder: (_, i) => teamTile(filtered[i]))),
       Padding(padding: const EdgeInsets.all(12), child: FilledButton.icon(onPressed: addTeamManually, icon: const Icon(Icons.add), label: const Text('Add Team Member'))),
     ]);
