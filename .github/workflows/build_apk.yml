@@ -24,11 +24,6 @@ jobs:
       - name: Create Android platform
         run: flutter create --platforms=android --project-name=phf .
 
-      - name: Add contacts permission
-        run: |
-          sed -i '/<manifest/i\
-          <uses-permission android:name="android.permission.READ_CONTACTS"/>' android/app/src/main/AndroidManifest.xml
-
       - name: Get dependencies
         run: flutter pub get
 
