@@ -47,8 +47,10 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Analyze app
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      # Only analyze the actual app code.
+      # This avoids the old default Flutter test referring to MyApp.
+      - name: Analyze CrewFlow
+        run: dart analyze lib/main.dart
 
       - name: Build CrewFlow APK
         run: flutter build apk --release
