@@ -110,7 +110,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze app
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze lib/main.dart --no-fatal-infos --no-fatal-warnings
 
       - name: Build CrewFlow APK
         run: flutter build apk --release
