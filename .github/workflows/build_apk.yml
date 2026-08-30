@@ -22,7 +22,7 @@ jobs:
           cache: true
 
       - name: Create Android platform
-        run: flutter create --platforms=android .
+        run: flutter create --platforms=android --project-name=phf .
 
       - name: Add contacts permission
         run: |
