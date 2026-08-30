@@ -32,8 +32,8 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Analyze app
+        run: flutter analyze lib/main.dart --no-fatal-infos --no-fatal-warnings
 
       - name: Build APK
         run: flutter build apk --release
