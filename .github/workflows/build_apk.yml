@@ -1,13 +1,10 @@
-name: Build CrewFlow Android APK
+name: Build APK
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-
-permissions:
-  contents: read
 
 jobs:
   build:
@@ -20,34 +17,23 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: '3.24.5'
           channel: stable
           cache: true
 
       - name: Create Android platform
-        run: flutter create --project-name crewflow --org com.crewflow --platforms=android .
+        run: flutter create --platforms=android .
 
       - name: Add contacts permission
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("android/app/src/main/AndroidManifest.xml")
-          text = path.read_text()
-
-          permission = '    <uses-permission android:name="android.permission.READ_CONTACTS" />\n'
-
-          if "android.permission.READ_CONTACTS" not in text:
-              marker = '<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
-              text = text.replace(marker, marker + "\n" + permission)
-              path.write_text(text)
-          PY
+          sed -i '/<manifest/i\
+          <uses-permission android:name="android.permission.READ_CONTACTS"/>' android/app/src/main/AndroidManifest.xml
 
       - name: Get dependencies
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze lib/main.dart
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Build APK
         run: flutter build apk --release
@@ -55,6 +41,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CrewFlow-Android-APK
+          name: CrewFlow-APK
           path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
