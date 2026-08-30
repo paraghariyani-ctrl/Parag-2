@@ -1,0 +1,122 @@
+name: Build CrewFlow APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: stable
+          cache: true
+
+      - name: Create Android platform
+        run: flutter create --platforms=android --project-name crewflow .
+
+      - name: Set Android SDK 35
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/build.gradle.kts")
+
+          if p.exists():
+              s = p.read_text()
+              s = s.replace(
+                  "compileSdk = flutter.compileSdkVersion",
+                  "compileSdk = 35"
+              )
+              p.write_text(s)
+
+          else:
+              p = Path("android/app/build.gradle")
+
+              if p.exists():
+                  s = p.read_text()
+                  s = s.replace(
+                      "compileSdk = flutter.compileSdkVersion",
+                      "compileSdk = 35"
+                  )
+                  s = s.replace(
+                      "compileSdk flutter.compileSdkVersion",
+                      "compileSdk 35"
+                  )
+                  p.write_text(s)
+          PY
+
+      - name: Add contacts permission
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+
+          permission = (
+              '<uses-permission '
+              'android:name="android.permission.READ_CONTACTS"/>'
+          )
+
+          if "android.permission.READ_CONTACTS" not in s:
+              idx = s.find(">")
+
+              s = (
+                  s[:idx + 1]
+                  + "\n    "
+                  + permission
+                  + "\n"
+                  + s[idx + 1:]
+              )
+
+          p.write_text(s)
+          PY
+
+      - name: Set CrewFlow app name
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+
+          s = s.replace(
+              'android:label="crewflow"',
+              'android:label="CrewFlow"'
+          )
+
+          s = s.replace(
+              'android:label="phf"',
+              'android:label="CrewFlow"'
+          )
+
+          p.write_text(s)
+          PY
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze app
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build CrewFlow APK
+        run: flutter build apk --release
+
+      - name: Upload CrewFlow APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrewFlow-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
