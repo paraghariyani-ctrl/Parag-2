@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-    name: Build Flutter APK
     runs-on: ubuntu-latest
 
     steps:
@@ -35,14 +34,31 @@ jobs:
         run: flutter pub get
 
       - name: Create Android Platform
-        run: |
-          if [ ! -d "android" ]; then
-            flutter create . --platforms=android
-          fi
+        run: flutter create --platforms=android .
 
-      - name: Set Android SDK
+      - name: Fix Android SDK
         run: |
-          sed -i 's/minSdk = .*/minSdk = 23/' android/app/build.gradle.kts || true
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/build.gradle.kts")
+          text = p.read_text()
+
+          text = text.replace(
+              "minSdkVersion = flutter.minSdkVersion",
+              "minSdk = flutter.minSdkVersion"
+          )
+
+          text = text.replace(
+              "minSdkVersion flutter.minSdkVersion",
+              "minSdk = flutter.minSdkVersion"
+          )
+
+          p.write_text(text)
+          PY
+
+      - name: Analyze
+        run: flutter analyze
 
       - name: Build APK
         run: flutter build apk --release
@@ -50,5 +66,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: PHF-App-APK
+          name: CrewFlow-APK
           path: build/app/outputs/flutter-apk/app-release.apk
