@@ -34,8 +34,13 @@ jobs:
       - name: Flutter Doctor
         run: flutter doctor -v
 
+      # IMPORTANT: --no-pub prevents dependency resolution here
       - name: Create Flutter Android Project
-        run: flutter create . --platforms=android --project-name crewflow
+        run: |
+          flutter create . \
+            --platforms=android \
+            --project-name=crewflow \
+            --no-pub
 
       - name: Fix flutter_contacts version
         run: |
@@ -56,6 +61,8 @@ jobs:
           )
 
           p.write_text(s)
+          print("flutter_contacts version fixed")
+
           PY
 
       - name: Set Android compile SDK 36
@@ -72,6 +79,9 @@ jobs:
                   "compileSdk = 36"
               )
               p.write_text(s)
+
+          print("Android compile SDK configured")
+
           PY
 
       - name: Add Android contacts permission
@@ -91,6 +101,9 @@ jobs:
               )
 
           p.write_text(s)
+
+          print("Contacts permission added")
+
           PY
 
       - name: Set CrewFlow app name
@@ -107,6 +120,9 @@ jobs:
           )
 
           p.write_text(s)
+
+          print("App name set to CrewFlow")
+
           PY
 
       - name: Get dependencies
@@ -128,5 +144,5 @@ jobs:
       - name: Build Summary
         run: |
           echo "## CrewFlow APK" >> $GITHUB_STEP_SUMMARY
-          echo "APK build completed." >> $GITHUB_STEP_SUMMARY
+          echo "APK build completed successfully." >> $GITHUB_STEP_SUMMARY
           ls -lh build/app/outputs/flutter-apk/app-release.apk
