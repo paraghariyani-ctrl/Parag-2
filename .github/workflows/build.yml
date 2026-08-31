@@ -35,8 +35,28 @@ jobs:
         run: flutter doctor -v
 
       - name: Create Flutter Android Project
+        run: flutter create . --platforms=android --project-name crewflow
+
+      - name: Fix flutter_contacts version
         run: |
-          flutter create . --platforms=android --project-name crewflow
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("pubspec.yaml")
+          s = p.read_text()
+
+          s = s.replace(
+              "flutter_contacts: ^1.4.5+1",
+              "flutter_contacts: ^2.1.0"
+          )
+
+          s = s.replace(
+              "flutter_contacts: 1.4.5+1",
+              "flutter_contacts: ^2.1.0"
+          )
+
+          p.write_text(s)
+          PY
 
       - name: Set Android compile SDK 36
         run: |
@@ -44,6 +64,7 @@ jobs:
           from pathlib import Path
 
           p = Path("android/app/build.gradle.kts")
+
           if p.exists():
               s = p.read_text()
               s = s.replace(
@@ -107,5 +128,5 @@ jobs:
       - name: Build Summary
         run: |
           echo "## CrewFlow APK" >> $GITHUB_STEP_SUMMARY
-          echo "Build completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "APK build completed." >> $GITHUB_STEP_SUMMARY
           ls -lh build/app/outputs/flutter-apk/app-release.apk
