@@ -1,0 +1,53 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build CrewFlow APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.0"
+          channel: stable
+          cache: true
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Create Android Platform
+        run: flutter create --platforms=android .
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrewFlow-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Build Summary
+        run: |
+          echo "## ✅ CrewFlow APK Ready" >> $GITHUB_STEP_SUMMARY
+          echo "APK successfully built." >> $GITHUB_STEP_SUMMARY
+          echo "Download it from the Artifacts section above." >> $GITHUB_STEP_SUMMARY
