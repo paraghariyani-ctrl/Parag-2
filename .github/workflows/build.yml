@@ -1,0 +1,106 @@
+name: Build CrewFlow APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build CrewFlow
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.7"
+          channel: stable
+          cache: true
+
+      - name: Create Android platform
+        run: |
+          flutter create \
+            --project-name crewflow \
+            --platforms=android \
+            .
+
+      - name: Set Android compile SDK 36
+        shell: bash
+        run: |
+          if [ -f android/app/build.gradle ]; then
+            sed -i -E \
+              's/compileSdk[[:space:]]+[0-9]+/compileSdk 36/g' \
+              android/app/build.gradle
+          fi
+
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i -E \
+              's/compileSdk[[:space:]]*=[[:space:]]*[0-9]+/compileSdk = 36/g' \
+              android/app/build.gradle.kts
+          fi
+
+      - name: Add Android contacts permission
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path(
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          s = p.read_text()
+
+          marker = (
+              '<manifest '
+              'xmlns:android="http://schemas.android.com/apk/res/android">'
+          )
+
+          permissions = (
+              '    <uses-permission '
+              'android:name="android.permission.READ_CONTACTS"/>\n'
+              '    <uses-permission '
+              'android:name="android.permission.WRITE_CONTACTS"/>\n'
+          )
+
+          if "android.permission.READ_CONTACTS" not in s:
+              s = s.replace(
+                  marker,
+                  marker + "\n" + permissions
+              )
+
+          s = s.replace(
+              'android:label="${applicationName}"',
+              'android:label="CrewFlow"'
+          )
+
+          p.write_text(s)
+          PY
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze CrewFlow
+        run: |
+          flutter analyze \
+            lib/main.dart \
+            --no-fatal-infos \
+            --no-fatal-warnings
+
+      - name: Build CrewFlow APK
+        run: flutter build apk --release
+
+      - name: Upload CrewFlow APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrewFlow-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
